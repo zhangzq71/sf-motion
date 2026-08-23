@@ -1,5 +1,7 @@
 #include "com.h"
 
+// TODO: add device ID
+
 /****************************************************************************** */
 
 int8_t com_send_value(com_t *com, void *value, uint16_t size) {
@@ -552,6 +554,19 @@ int8_t com_foc_get_actual_e_rad(com_t *com) {
   return 0;
 }
 
+int8_t com_foc_get_abs_encoder_error_comp_value(com_t *com) {
+  uint16_t idx;
+  int8_t ret_val = com_receive_value(com, &idx, sizeof(idx));
+  float error_comp = 0.0f;
+  if (ret_val == 0) {
+    if (idx < ERROR_LUT_SIZE && com->pfoc->p_abs_encoder_error_comp_deg) {
+      error_comp = com->pfoc->p_abs_encoder_error_comp_deg[idx];
+    }
+  }
+  com_send_value(com, &error_comp, sizeof(error_comp));
+  return 0;
+}
+
 /****************************************************************************** */
 
 void com_init(com_t *com, int (*recv_data)(uint8_t*, uint16_t), int (*send_data)(uint8_t*, uint16_t), uint32_t (*get_tick_ms)(void),
@@ -619,6 +634,7 @@ void com_update(com_t *com) {
       case 52: com_start_calibrate_abs_encoder(com); break;
 
       case 53: com_foc_get_actual_e_rad(com); break;
+      case 54: com_foc_get_abs_encoder_error_comp_value(com); break;
     }
   }
   else {

@@ -569,6 +569,16 @@
                     "type": "float"
                 }
             ]
+        },
+        "get_abs_encoder_error_comp": {
+            "code": 54,
+            "args": [
+                {
+                    "name": "idx",
+                    "type": "uint16"
+                }
+            ],
+            "response": [{"name": "error_comp", "type": "float"}]
         }
     },
     "plotter_dict": {

@@ -227,6 +227,21 @@ void sc_measure_Lq_update(self_commissioning_t *sc, float Ts) {
     sc->signal_t++;
 }
 
+static float circular_mean(float a, float b) {
+    a = fmodf(a, 360.0f); if (a < 0) a += 360.0f;
+    b = fmodf(b, 360.0f); if (b < 0) b += 360.0f;
+
+    float diff = fabsf(a - b);
+    if (diff > 180.0f) {
+        if (a < b) a += 360.0f;
+        else       b += 360.0f;
+    }
+    float mean = (a + b) / 2.0f;
+    mean = fmodf(mean, 360.0f);
+    if (mean < 0) mean += 360.0f;
+    return mean;
+}
+
 void sc_calibrate_abs_encoder_update(self_commissioning_t *sc) {
     float vd = 1.5f;
     float vq = 0.0f;
@@ -262,13 +277,37 @@ void sc_calibrate_abs_encoder_update(self_commissioning_t *sc) {
                 // check empty value
                 float *abs_error_comp = sc->p_foc->p_abs_encoder_error_comp_deg;
                 if (abs_error_comp) {
-                    for (int i = 0; i < ERROR_LUT_SIZE; i++) {
-                        if (abs_error_comp[i] == 0) {
-                            int last_i = i - 1;
-                            int next_i = i + 1;
-                            if (last_i < 0) last_i += ERROR_LUT_SIZE;
-                            if (next_i > ERROR_LUT_SIZE) next_i -= ERROR_LUT_SIZE;
-                            abs_error_comp[i] = (abs_error_comp[last_i] + abs_error_comp[next_i]) / 2.0f;
+                    int changed = 1;
+                    int max_iter = ERROR_LUT_SIZE;
+
+                    while (changed && max_iter-- > 0) {
+                        changed = 0;
+                        float temp[ERROR_LUT_SIZE];
+                        for (int i = 0; i < ERROR_LUT_SIZE; i++) {
+                            temp[i] = abs_error_comp[i];
+                        }
+
+                        for (int i = 0; i < ERROR_LUT_SIZE; i++) {
+                            if (temp[i] == 0.0f) {
+                                int left  = (i - 1 + ERROR_LUT_SIZE) % ERROR_LUT_SIZE;
+                                int right = (i + 1) % ERROR_LUT_SIZE;
+
+                                float val_left  = temp[left];
+                                float val_right = temp[right];
+
+                                if (val_left != 0.0f && val_right != 0.0f) {
+                                    abs_error_comp[i] = circular_mean(val_left, val_right);
+                                    changed = 1;
+                                } 
+                                else if (val_left != 0.0f) {
+                                    abs_error_comp[i] = val_left;
+                                    changed = 1;
+                                } 
+                                else if (val_right != 0.0f) {
+                                    abs_error_comp[i] = val_right;
+                                    changed = 1;
+                                }
+                            }
                         }
                     }
                 }

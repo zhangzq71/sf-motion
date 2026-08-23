@@ -196,12 +196,6 @@ void foc_sensorless_init(foc_t *hfoc, float sampling_freq) {
     second_order_lpf_init(&hfoc->id_lpf, HFI_ID_LPF_FC, sampling_freq);
     second_order_lpf_init(&hfoc->iq_lpf, HFI_IQ_LPF_FC, sampling_freq);
 
-    if (hfoc->foc_mode == FOC_MODE_HYBRID) {
-        hfoc->state = MOTOR_STATE_SENSORED;
-        return;
-    }
-    else if (hfoc->foc_mode == FOC_MODE_SENSORED) return;
-
     if (hfoc->foc_mode == FOC_MODE_SENSORLESS_SMO_HFI_NEW) {
         hfi_init(&hfoc->hfi, HFI_AMP, HFI_FREQ, sampling_freq);
     }
@@ -213,6 +207,10 @@ void foc_sensorless_init(foc_t *hfoc, float sampling_freq) {
     hfoc->pd_v_pulse = 0.0f;
     hfoc->pd_state = P_DET_START;
     hfoc->state = MOTOR_STATE_HFI;
+
+    if (hfoc->foc_mode == FOC_MODE_HYBRID) {
+        hfoc->state = MOTOR_STATE_SENSORED;
+    }
 }
 
 void foc_sensorless_polarity_detection(foc_t *hfoc) {
@@ -568,6 +566,17 @@ void foc_update(foc_t *hfoc, float Ts) {
 }
 
 void foc_set_mode(foc_t *hfoc, foc_mode_t mode) {
+    if (mode == hfoc->foc_mode) return;
+
+    if (mode == FOC_MODE_SENSORLESS_SMO_HFI_NEW || mode == FOC_MODE_SENSORLESS_SMO_HFI) {
+        hfoc->pd_time = 20;
+        hfoc->pd_v_pulse = 0.0f;
+        hfoc->pd_state = P_DET_START;
+        hfoc->state = MOTOR_STATE_HFI;
+    }
+    else if (mode == FOC_MODE_HYBRID) {
+        hfoc->state = MOTOR_STATE_SENSORED;
+    }
     hfoc->foc_mode = mode;
 }
 
