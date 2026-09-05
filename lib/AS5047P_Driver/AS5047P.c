@@ -77,29 +77,14 @@ void AS5047P_calc_degree(AS5047P_t *encd) {
     }
 
     // Error flag check (bit 14)
-    if ((raw_data >> 14) & 0x1) {
-        return;
-    }
+    // is this needed?
+    // if ((raw_data >> 14) & 0x1) {
+    //     return;
+    // }
 
     uint16_t pos = raw_data & 0x3FFF;
     encd->raw_pos = (encd->dir == SENSOR_DIR_NORMAL)? pos : (0x3FFF - pos);
     const float angle_raw = (float)encd->raw_pos * encd->count_to_deg_scale;
-
-    // encd->angle_filtered = encd->angle_filtered * (1.0f - encd->angle_alpha_filter) + angle_raw * encd->angle_alpha_filter;
-
-    // float angle_diff = angle_raw - encd->prev_raw_angle;
-    // angle_diff -= 360.0f * floorf((angle_diff + 180.0f) / 360.0f);
-
-    // if (fabsf(angle_diff) > MAX_ANGLE_JUMP_DEG) {
-    //     if (++encd->spike_counter < SPIKE_REJECT_COUNT) {
-    //         return;
-    //     }
-    //     encd->spike_counter = 0;
-    // } else {
-    //     encd->spike_counter = 0;
-    // }
-
-    // encd->prev_raw_angle = angle_raw;
 
     // Filter IIR dengan wrap-around
     float filtered_diff = angle_raw - encd->angle_filtered;

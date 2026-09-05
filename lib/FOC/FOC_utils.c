@@ -26,9 +26,8 @@ void foc_inverter_init(foc_t *hfoc, void (*enable_motor)(void), void (*disable_m
     hfoc->get_pwm_res = get_pwm_res;
 }
 
-void foc_feedback_sensor_init(foc_t *hfoc, float (*get_mech_degre)(void), float (*get_mech_rpm)(void), float *p_abs_encoder_error_LUT, dir_mode_t sensor_dir) {
+void foc_feedback_sensor_init(foc_t *hfoc, float (*get_mech_degre)(void), float *p_abs_encoder_error_LUT, dir_mode_t sensor_dir) {
     hfoc->get_mech_degre = get_mech_degre;
-    hfoc->get_mech_rpm = get_mech_rpm;
     hfoc->p_abs_encoder_error_comp_deg = p_abs_encoder_error_LUT;
 	hfoc->sensor_dir = sensor_dir;
 }
@@ -188,7 +187,6 @@ void open_loop_voltage_control(foc_t *hfoc, float vd_ref, float vq_ref, float an
 }
 
 void foc_sensorless_init(foc_t *hfoc, float sampling_freq) {
-
     float Rs = hfoc->Rs;
     float Ls = (hfoc->Ld + hfoc->Lq) / 2.0f;
     smo_init(&hfoc->smo, Rs, Ls, hfoc->pole_pairs, 1.0f / sampling_freq);
@@ -205,6 +203,7 @@ void foc_sensorless_init(foc_t *hfoc, float sampling_freq) {
 
     hfoc->pd_time = 20;
     hfoc->pd_v_pulse = 0.0f;
+    hfoc->pd_count = 0;
     hfoc->pd_state = P_DET_START;
     hfoc->state = MOTOR_STATE_HFI;
 
@@ -520,6 +519,9 @@ void foc_current_control_update(foc_t *hfoc, float Ts) {
 }
 
 void foc_get_mech_degree(foc_t *hfoc, float Ts) {
+    if (++hfoc->encoder_loop_count < SPEED_CONTROL_CYCLE) return;
+    hfoc->encoder_loop_count = 0;
+
     float rad_diff = hfoc->e_rad - hfoc->last_e_rad;
     hfoc->last_e_rad = hfoc->e_rad;
 
@@ -536,7 +538,7 @@ void foc_get_mech_degree(foc_t *hfoc, float Ts) {
 
     // calculate e_omega
     rad_diff -= TWO_PI * floorf((rad_diff + PI) / TWO_PI);
-    float e_omega = rad_diff / Ts;
+    float e_omega = rad_diff / (Ts * SPEED_CONTROL_CYCLE);
     hfoc->encoder_e_omega = second_order_lpf_update(&hfoc->e_omega_lpf, e_omega);
 }
 
@@ -567,17 +569,8 @@ void foc_update(foc_t *hfoc, float Ts) {
 
 void foc_set_mode(foc_t *hfoc, foc_mode_t mode) {
     if (mode == hfoc->foc_mode) return;
-
-    if (mode == FOC_MODE_SENSORLESS_SMO_HFI_NEW || mode == FOC_MODE_SENSORLESS_SMO_HFI) {
-        hfoc->pd_time = 20;
-        hfoc->pd_v_pulse = 0.0f;
-        hfoc->pd_state = P_DET_START;
-        hfoc->state = MOTOR_STATE_HFI;
-    }
-    else if (mode == FOC_MODE_HYBRID) {
-        hfoc->state = MOTOR_STATE_SENSORED;
-    }
     hfoc->foc_mode = mode;
+    foc_sensorless_init(hfoc, BLDC_PWM_FREQ);
 }
 
 foc_mode_t foc_get_mode(foc_t *hfoc) {

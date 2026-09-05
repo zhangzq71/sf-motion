@@ -120,6 +120,7 @@ typedef struct {
 
 	uint8_t speed_control_loop_count;
 	uint8_t position_control_loop_count;
+	uint8_t encoder_loop_count;
 
 	PID_Controller_t id_ctrl, iq_ctrl;
 	PID_Controller_t speed_ctrl;
@@ -165,11 +166,10 @@ typedef struct {
 	void (*disable_motor)(void);
 	uint32_t (*get_pwm_res)(void);
 	float (*get_mech_degre)(void);
-	float (*get_mech_rpm)(void);
 }foc_t;
 
 void foc_inverter_init(foc_t *hfoc, void (*enable_motor)(void), void (*disable_motor)(void), uint32_t (*get_pwm_res)(void));
-void foc_feedback_sensor_init(foc_t *hfoc, float (*get_mech_degre)(void), float (*get_mech_rpm)(void), float *p_abs_encoder_error_LUT, dir_mode_t sensor_dir);
+void foc_feedback_sensor_init(foc_t *hfoc, float (*get_mech_degre)(void), float *p_abs_encoder_error_LUT, dir_mode_t sensor_dir);
 void foc_speed_feedback_sensor_init(foc_t *hfoc, float fc, float sampling_freq);
 void foc_motor_init(foc_t *hfoc, uint8_t pole_pairs, float kv);
 void foc_gear_reducer_init(foc_t *hfoc, float ratio);

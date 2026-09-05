@@ -457,8 +457,7 @@ class LivePlotter(QtWidgets.QMainWindow):
                 self.motor.plotter_add_line('Is_ref')
                 self.motor.plotter_add_line('id')
                 self.motor.plotter_add_line('iq')
-                # self.motor.plotter_add_line('m_angle_rad')
-                # self.motor.plotter_add_line('m_angle_rad_comp')
+                self.motor.plotter_add_line('e_rad')
                 # self.motor.plotter_add_line('v_bus')
             elif motor_mode == 1:
                 self.motor.plotter_add_line('rpm_ref')
@@ -466,6 +465,10 @@ class LivePlotter(QtWidgets.QMainWindow):
             elif motor_mode == 2:
                 self.motor.plotter_add_line('pos_ref')
                 self.motor.plotter_add_line('actual_angle')
+            else:
+                self.motor.plotter_add_line('m_angle_rad')
+                self.motor.plotter_add_line('m_angle_rad_comp')
+
 
             
         except serial.SerialException as e:

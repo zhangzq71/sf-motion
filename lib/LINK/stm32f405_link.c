@@ -51,7 +51,7 @@ int link_enable_pwm(TIM_HandleTypeDef *htim) {
   if (HAL_TIMEx_PWMN_Start(htim, TIM_CHANNEL_3) != HAL_OK) return -1;
   // channel 4 is used to trigger the ADC
   if (HAL_TIM_PWM_Start(htim, TIM_CHANNEL_4) != HAL_OK) return -1;
-  htim->Instance->CCR4 = 10;
+  htim->Instance->CCR4 = htim->Instance->ARR-1;
   return 0;
 }
 

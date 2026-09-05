@@ -1,7 +1,7 @@
 #ifndef FOC_CONFIG_H_
 #define FOC_CONFIG_H_
 
-#define BLDC_PWM_FREQ 20000
+#define BLDC_PWM_FREQ 40000
 #define SPEED_CONTROL_CYCLE	5
 #define POSITION_CONTROL_CYCLE 10
 
@@ -18,10 +18,10 @@
 #define HFI_NEW 1
 
 /* HFI amplitudo (V) */
-#define HFI_AMP 3.0f
+#define HFI_AMP 2.0f
 
 /* HFI frequency (Hz) */
-#define HFI_FREQ 2000.0f
+#define HFI_FREQ 4000.0f
 
 /* LPF Cut-off frequency for Id and Iq */
 #define HFI_ID_LPF_FC 200.0f
